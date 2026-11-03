@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Live COPD Audio Monitor</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text-main); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+    .container { max-width: 500px; width: 100%; }
+    .card { background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    h1 { font-size: 20px; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+    
+    .status-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
+    .status-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+    .status-disconnected { background: var(--danger); }
+    .status-connected { background: var(--success); }
+    
+    button { width: 100%; padding: 16px; border-radius: 8px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s; margin-bottom: 12px; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:active { background: var(--primary-hover); transform: scale(0.98); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:active { background: transform: scale(0.98); }
+    .btn-disabled { background: var(--text-muted); color: white; cursor: not-allowed; }
+
+    .audio-meter-container { height: 20px; background: var(--border); border-radius: 10px; overflow: hidden; margin: 16px 0; }
+    .audio-meter-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.1s linear; }
+    
+    .prediction-box { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }
+    .prediction-title { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .prediction-result { font-size: 24px; font-weight: bold; color: var(--primary); margin-bottom: 4px; }
+    .prediction-confidence { font-size: 14px; color: var(--text-muted); }
+    
+    .history { font-size: 13px; color: var(--text-muted); max-height: 150px; overflow-y: auto; padding-right: 10px; }
+    .history-item { padding: 4px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+    
+    .instruction { font-size: 14px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; background: #e0f2fe; padding: 12px; border-radius: 8px; color: #0369a1; border: 1px solid #bae6fd;}
+    .alert-box { color: var(--danger); font-size: 14px; text-align: center; margin-bottom: 12px; font-weight: 500; height: 20px;}
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="card">
+    <h1><i class="fa-solid fa-stethoscope"></i> COPD Audio Monitor</h1>
+    
+    <div class="instruction">
+      <i class="fa-solid fa-circle-info"></i> <strong>Instructions:</strong> Place the phone microphone near the breathing source. Keep the phone at a consistent distance during the entire recording.
+    </div>
+    
+    <div class="status-row">
+      <div><span class="status-indicator status-disconnected" id="conn-indicator"></span><span id="conn-text">Disconnected</span></div>
+      <div><i class="fa-regular fa-clock"></i> <span id="duration-text">00:00</span></div>
+    </div>
+    
+    <button id="mic-btn" class="btn-primary">Allow Microphone</button>
+    <button id="record-btn" class="btn-disabled" disabled>START TEST</button>
+    
+    <div class="alert-box" id="quality-alert"></div>
+    
+    <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Audio Level: <span id="model-status">Waiting...</span></div>
+    <div class="audio-meter-container">
+      <div class="audio-meter-fill" id="audio-meter"></div>
+    </div>
+    
+    <div class="prediction-box">
+      <div class="prediction-title">Model Prediction</div>
+      <div class="prediction-result" id="pred-result">---</div>
+      <div class="prediction-confidence" id="pred-conf">Confidence: --%</div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h2 style="font-size: 16px; margin-top: 0;">Prediction History</h2>
+    <div class="history" id="history-log">
+      <!-- History items appear here -->
+    </div>
+  </div>
+  
+  <div class="card" id="export-card" style="display: none; border: 2px solid var(--primary);">
+    <h2 style="font-size: 16px; margin-top: 0; color: var(--primary);">Integrate with Fusion Model</h2>
+    <p style="font-size: 14px; color: var(--text-muted);">Send this live audio analysis back to the main dashboard to combine it with X-Ray and Clinical data.</p>
+    <form action="/predict" method="POST">
+      <input type="hidden" name="live_audio_prob" id="final_audio_prob" value="">
+      <button type="submit" class="btn-primary" style="margin-bottom: 0;"><i class="fa-solid fa-share-from-square"></i> Send to Dashboard</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Setup Socket.IO connection to existing backend
+  const socket = io();
+  
+  let audioContext;
+  let workletNode;
+  let mediaStream;
+  let analyser;
+  let dataArray;
+  
+  let isRecording = false;
+  let startTime;
+  let durationInterval;
+  
+  // Audio Buffer State (We need ~8.3 seconds. For efficiency, we capture PCM and send chunks)
+  // To avoid huge latency, we will capture chunks and send them over WS.
+  // The backend will maintain the 8.3s sliding window.
+  
+  const connIndicator = document.getElementById('conn-indicator');
+  const connText = document.getElementById('conn-text');
+  const micBtn = document.getElementById('mic-btn');
+  const recordBtn = document.getElementById('record-btn');
+  const qualityAlert = document.getElementById('quality-alert');
+  const modelStatus = document.getElementById('model-status');
+  const audioMeter = document.getElementById('audio-meter');
+  const durationText = document.getElementById('duration-text');
+  const predResult = document.getElementById('pred-result');
+  const predConf = document.getElementById('pred-conf');
+  const historyLog = document.getElementById('history-log');
+
+  // Connection handling
+  socket.on('connect', () => {
+    connIndicator.className = 'status-indicator status-connected';
+    connText.innerText = 'Server Connected';
+  });
+  
+  socket.on('disconnect', () => {
+    connIndicator.className = 'status-indicator status-disconnected';
+    connText.innerText = 'Server Disconnected';
+    stopRecording();
+  });
+
+  socket.on('prediction_result', (data) => {
+    if (!isRecording) return;
+    
+    let label = data.prediction;
+    let conf = (data.confidence * 100).toFixed(1);
+    
+    // Low confidence handling
+    if (data.confidence < 0.40) {
+      predResult.innerText = "Low-confidence prediction";
+      predResult.style.color = "var(--warning)";
+      predConf.innerText = `Highest: ${label} (${conf}%)`;
+    } else {
+      predResult.innerText = label;
+      predResult.style.color = "var(--primary)";
+      predConf.innerText = `Confidence: ${conf}%`;
+    }
+    
+    // Make the integration card visible and update the hidden value
+    document.getElementById('export-card').style.display = 'block';
+    document.getElementById('final_audio_prob').value = data.abnormal_prob;
+    
+    // Add to history
+    const d = new Date();
+    const timeStr = d.toTimeString().split(' ')[0];
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    div.innerHTML = `<span>${timeStr}</span><span>${label} &mdash; ${conf}%</span>`;
+    historyLog.prepend(div);
+  });
+
+  micBtn.addEventListener('click', async () => {
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, sampleRate: 16000 } });
+      micBtn.style.display = 'none';
+      recordBtn.className = 'btn-primary';
+      recordBtn.disabled = false;
+    } catch (err) {
+      alert("Microphone permission denied or unavailable. Please grant access in your browser settings.");
+    }
+  });
+
+  recordBtn.addEventListener('click', async () => {
+    if (!isRecording) {
+      startRecording();
+    } else {
+      stopRecording();
+    }
+  });
+
+  async function startRecording() {
+    isRecording = true;
+    recordBtn.innerText = "STOP TEST";
+    recordBtn.className = 'btn-danger';
+    modelStatus.innerText = "Listening...";
+    historyLog.innerHTML = ""; // clear history
+    predResult.innerText = "---";
+    predConf.innerText = "Confidence: --%";
+    
+    startTime = Date.now();
+    durationInterval = setInterval(updateDuration, 1000);
+    
+    audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+    
+    // Load a simple worklet inline using Blob to capture PCM directly
+    const workletCode = `
+      class PCMCaptureProcessor extends AudioWorkletProcessor {
+        constructor() {
+          super();
+          this.bufferSize = 16000; // 1 second chunks
+          this.buffer = new Float32Array(this.bufferSize);
+          this.framesCount = 0;
+        }
+        process(inputs, outputs, parameters) {
+          const input = inputs[0];
+          if (input.length > 0) {
+            const channel = input[0];
+            for (let i = 0; i < channel.length; i++) {
+              this.buffer[this.framesCount++] = channel[i];
+              if (this.framesCount >= this.bufferSize) {
+                this.port.postMessage(this.buffer);
+                this.buffer = new Float32Array(this.bufferSize);
+                this.framesCount = 0;
+              }
+            }
+          }
+          return true;
+        }
+      }
+      registerProcessor('pcm-capture-processor', PCMCaptureProcessor);
+    `;
+    const blob = new Blob([workletCode], { type: 'application/javascript' });
+    await audioContext.audioWorklet.addModule(URL.createObjectURL(blob));
+    
+    const source = audioContext.createMediaStreamSource(mediaStream);
+    workletNode = new AudioWorkletNode(audioContext, 'pcm-capture-processor');
+    
+    // Setup Analyser for Audio Level Meter
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    source.connect(analyser);
+    drawMeter();
+    
+    // Receive PCM chunks from Worklet and send via WebSocket
+    workletNode.port.onmessage = (e) => {
+      if (!isRecording) return;
+      const pcmFloat32 = e.data;
+      
+      // Calculate RMS for basic quality check
+      let sumSquares = 0;
+      let peak = 0;
+      for (let i = 0; i < pcmFloat32.length; i++) {
+        let val = pcmFloat32[i];
+        sumSquares += val * val;
+        if (Math.abs(val) > peak) peak = Math.abs(val);
+      }
+      let rms = Math.sqrt(sumSquares / pcmFloat32.length);
+      
+      if (rms < 0.001) {
+        qualityAlert.innerText = "Audio signal too weak. Move the phone closer.";
+      } else if (peak >= 0.99) {
+        qualityAlert.innerText = "Audio level too high. Move the phone slightly farther away.";
+      } else {
+        qualityAlert.innerText = "";
+      }
+      
+      // Convert Float32 to Int16 to save bandwidth
+      const pcmInt16 = new Int16Array(pcmFloat32.length);
+      for (let i = 0; i < pcmFloat32.length; i++) {
+        let s = Math.max(-1, Math.min(1, pcmFloat32[i]));
+        pcmInt16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      }
+      
+      // Send raw binary to server
+      socket.emit('audio_chunk', pcmInt16.buffer);
+    };
+    
+    source.connect(workletNode);
+    workletNode.connect(audioContext.destination);
+    
+    // Tell server a new session is starting
+    socket.emit('start_session');
+  }
+
+  function stopRecording() {
+    isRecording = false;
+    recordBtn.innerText = "START TEST";
+    recordBtn.className = 'btn-primary';
+    modelStatus.innerText = "Waiting...";
+    qualityAlert.innerText = "";
+    clearInterval(durationInterval);
+    
+    if (workletNode) workletNode.disconnect();
+    if (audioContext && audioContext.state !== 'closed') audioContext.close();
+    
+    socket.emit('end_session');
+  }
+
+  function updateDuration() {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+    const s = String(elapsed % 60).padStart(2, '0');
+    durationText.innerText = `${m}:${s}`;
+  }
+  
+  function drawMeter() {
+    if (!isRecording) {
+      audioMeter.style.width = '0%';
+      return;
+    }
+    requestAnimationFrame(drawMeter);
+    analyser.getByteFrequencyData(dataArray);
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+      sum += dataArray[i];
+    }
+    let average = sum / dataArray.length;
+    let percent = Math.min(100, (average / 255) * 100 * 2); // scale up a bit for visibility
+    audioMeter.style.width = percent + '%';
+  }
+</script>
+
+</body>
+</html>

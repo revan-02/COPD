@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PulmoAI — Multimodal COPD Risk Screening</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --card-bg: #111111;
+    --border: #222222;
+    --text-main: #ededed;
+    --text-muted: #a1a1aa;
+    --accent: #3b82f6;
+    --accent-glow: rgba(59, 130, 246, 0.15);
+    --success: #10b981;
+    --warning: #f43f5e;
+  }
+
+  body {
+    margin: 0;
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background-color: var(--bg);
+    min-height: 100vh;
+  }
+
+  /* Sleek minimalist cards */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  header { max-width: 1100px; margin: 0 auto; padding: 60px 24px 40px; }
+  
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px;
+    background: rgba(244, 63, 94, 0.1);
+    color: var(--warning);
+    border: 1px solid rgba(244, 63, 94, 0.2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-radius: 6px;
+    font-weight: 600;
+    margin: 0 0 20px;
+  }
+
+  h1 { font-size: 36px; font-weight: 600; margin: 0 0 12px; letter-spacing: -0.02em; }
+  .lede { font-size: 15px; color: var(--text-muted); max-width: 800px; line-height: 1.6; margin: 0; }
+  
+  .status-bar {
+    display: flex; gap: 24px; margin-top: 32px;
+    padding: 16px 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  }
+  .status-item { display: flex; align-items: center; gap: 8px; color: var(--text-muted); }
+  .status-icon.loaded { color: var(--success); }
+  .status-icon.missing { color: var(--warning); }
+
+  main { 
+    max-width: 1100px; margin: 0 auto; padding: 0 24px 80px; 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; /* Exactly side-by-side */
+    gap: 24px; 
+  }
+  
+  /* Make Fusion full width at the bottom */
+  .fusion-container {
+    grid-column: 1 / -1; 
+  }
+  
+  .card h2 { font-size: 16px; font-weight: 500; margin: 0 0 24px; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+  .card h2 i { color: var(--accent); }
+  
+  .field-group { margin-bottom: 20px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  
+  label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 8px; }
+  
+  input[type="number"], select, input[type="file"] { 
+    width: 100%; padding: 10px 12px; 
+    background: var(--bg); 
+    border: 1px solid var(--border); 
+    border-radius: 6px; 
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  input[type="number"]:focus, select:focus { outline: none; border-color: var(--accent); }
+
+  .radio-group { display: flex; gap: 8px; }
+  .radio-group label { 
+    flex: 1; text-align: center; padding: 10px 6px; 
+    background: var(--bg);
+    border: 1px solid var(--border); 
+    border-radius: 6px; cursor: pointer; transition: all 0.1s;
+    font-size: 13px; color: var(--text-muted);
+  }
+  .radio-group input { display: none; }
+  .radio-group input:checked + label { 
+    background: var(--accent-glow); 
+    border-color: var(--accent); 
+    color: var(--accent); 
+    font-weight: 500;
+  }
+  
+  .upload-box { 
+    border: 1px dashed var(--border); 
+    padding: 16px; text-align: center; border-radius: 8px; margin-bottom: 16px; 
+    background: var(--bg);
+  }
+  .upload-box:hover { border-color: var(--text-muted); }
+  .upload-box label { color: var(--text-main); font-size: 13px; margin-bottom: 12px; }
+  
+  button.submit { 
+    width: 100%; padding: 14px; 
+    background: var(--text-main); 
+    color: var(--bg); 
+    border: none;
+    border-radius: 6px; 
+    cursor: pointer; font-weight: 500; font-size: 14px; 
+    transition: transform 0.1s;
+    margin-top: 8px;
+  }
+  button.submit:hover { transform: translateY(-1px); }
+  
+  /* Modality Results List */
+  .modality-list { display: flex; flex-direction: column; gap: 12px; }
+  .modality { 
+    background: var(--bg);
+    border: 1px solid var(--border); 
+    padding: 16px; border-radius: 8px; 
+  }
+  .modality-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .modality-name { font-weight: 500; font-size: 14px; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; color: var(--text-main); }
+  .modality-desc { font-size: 12px; margin: 0; color: var(--text-muted); padding-left: 24px; }
+  .modality-score { font-family: 'JetBrains Mono'; font-weight: 500; font-size: 14px; color: var(--text-main); background: var(--card-bg); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); }
+  
+  .synthetic-warn { font-size: 11px; color: var(--warning); display: block; margin-top: 8px; padding-left: 24px;}
+
+  /* Audio Waveform */
+  #waveform-container { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 16px; }
+  #play-btn { background: var(--accent); color: white; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  #waveform { flex: 1; height: 32px; }
+
+  /* Final Fusion */
+  .fusion-verdict { 
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 32px; border-radius: 8px; 
+    background: var(--bg); 
+    border: 1px solid var(--border);
+  }
+  .fusion-verdict.missing { border-color: var(--warning); }
+  
+  .fusion-left h3 { font-size: 14px; font-weight: 500; color: var(--text-muted); margin: 0 0 8px; }
+  .fusion-left p { margin: 0; font-size: 13px; color: var(--text-muted); max-width: 400px; line-height: 1.5; }
+  
+  .fusion-right { text-align: right; }
+  .fusion-right .score { font-family: 'JetBrains Mono'; font-size: 42px; font-weight: 600; margin: 0 0 4px; color: var(--text-main); }
+  .fusion-right .class { font-size: 16px; font-weight: 500; margin: 0; color: var(--accent); }
+  .fusion-verdict.missing .class { color: var(--warning); }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow"><i class="fa-solid fa-triangle-exclamation"></i> Research Prototype — Not a Clinical Diagnosis</div>
+  <h1>Multimodal COPD Risk Fusion</h1>
+  <p class="lede">Clinical spirometry and respiratory-audio models are combined via late fusion. The multimodal fusion result represents a research proof-of-concept and should not be interpreted as a clinically validated patient-level prediction.</p>
+  
+  <div class="status-bar">
+    <div class="status-item"><i class="fa-solid fa-circle status-icon {{ 'loaded' if status.clinical else 'missing' }}"></i> CLINICAL XGBOOST: {{ 'LOADED' if status.clinical else 'MISSING' }}</div>
+      <div class="status-item"><i class="fa-solid fa-circle status-icon {{ 'loaded' if status.audio else 'missing' }}"></i> AUDIO CRNN: {{ 'LOADED' if status.audio else 'MISSING' }}</div>
+    <div class="status-item"><i class="fa-solid fa-circle status-icon {{ 'loaded' if status.fusion else 'missing' }}"></i> FUSION META-LEARNER: {{ 'LOADED' if status.fusion else 'MISSING' }}</div>
+  </div>
+</header>
+
+<main>
+  <!-- LEFT COLUMN: INPUTS -->
+  <section class="card">
+    <h2><i class="fa-solid fa-sliders"></i> Patient Data & Modalities</h2>
+    <form method="POST" action="/predict" enctype="multipart/form-data">
+      <div class="field-group row2">
+        <div class="field"><label>FEV1 (mL)</label><input type="number" name="fev1" value="{{ form.fev1 if form else '' }}" required></div>
+        <div class="field"><label>FVC (mL)</label><input type="number" name="fvc" value="{{ form.fvc if form else '' }}" required></div>
+        <div class="field"><label>Age</label><input type="number" name="age" value="{{ form.age if form else '' }}" required></div>
+        <div class="field"><label>Height (cm)</label><input type="number" name="height" value="{{ form.height if form else '' }}" required></div>
+      </div>
+      
+      <div class="field-group row2">
+        <div class="field"><label>Sex</label>
+          <div class="radio-group">
+            <input type="radio" id="m" name="gender" value="male" {% if not form.gender or form.gender == 'male' %}checked{% endif %}><label for="m">Male</label>
+            <input type="radio" id="f" name="gender" value="female" {% if form.gender == 'female' %}checked{% endif %}><label for="f">Female</label>
+          </div>
+        </div>
+        <div class="field"><label>Smoking History</label>
+          <div class="radio-group">
+            <input type="radio" id="s1" name="smoking_status" value="never" {% if not form.smoking_status or form.smoking_status == 'never' %}checked{% endif %}><label for="s1">Never</label>
+            <input type="radio" id="s2" name="smoking_status" value="former" {% if form.smoking_status == 'former' %}checked{% endif %}><label for="s2">Former</label>
+            <input type="radio" id="s3" name="smoking_status" value="current" {% if form.smoking_status == 'current' %}checked{% endif %}><label for="s3">Current</label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="field-group row2">
+        <label>Race Reference Equation</label>
+        <select name="race">
+          {% for v, l in race_options %}
+            <option value="{{v}}" {% if form.race == v %}selected{% endif %}>{{l}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      <hr>
+
+      <div class="field-group">
+        <div class="upload-box">
+          <label><i class="fa-solid fa-lungs"></i> Breathing Audio</label>
+          <input type="hidden" name="live_audio_prob" value="{{ form.get('live_audio_prob', '') if form else '' }}">
+          <input type="file" name="audio_file" accept="audio/*">
+          <div style="margin-top: 8px; font-size: 13px;">
+            <a href="/live" style="color: var(--primary); text-decoration: none;"><i class="fa-solid fa-microphone"></i> Or record live from phone</a>
+          </div>
+          {% if result and result.audio_filename %}
+            <div style="font-size: 11px; color: var(--success); margin-top: 10px;"><i class="fa-solid fa-check"></i> Attached: {{ result.audio_filename }}</div>
+          {% endif %}
+        </div>
+      </div>
+      
+      <div style="display: flex; gap: 12px; margin-top: 8px;">
+        <a href="/" style="flex: 1; padding: 14px; text-align: center; background: var(--border); color: var(--text-main); text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 14px; transition: transform 0.1s;">Clear</a>
+        <button type="submit" class="submit" style="flex: 2; margin-top: 0;">Compute Multimodal Risk</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- RIGHT COLUMN: MODALITY SCORES -->
+  <section class="card">
+    <h2><i class="fa-solid fa-chart-simple"></i> Independent Modalities</h2>
+    
+    {% if result %}
+      {% if result.error %}
+        <div style="background: #ef444420; border: 1px solid #ef4444; color: #ef4444; padding: 16px; border-radius: 8px; margin-top: 16px;">
+          <i class="fa-solid fa-triangle-exclamation"></i> <strong>Error:</strong> {{ result.error }}
+        </div>
+      {% else %}
+      <div class="modality-list">
+        <!-- Clinical ML -->
+        <div class="modality">
+          <div class="modality-header">
+            <div>
+              <p class="modality-name"><i class="fa-solid fa-table-list"></i> Clinical ML (XGBoost)</p>
+              <p class="modality-desc">Pre-bronchodilator Spirometry</p>
+            </div>
+            <div class="modality-score">{{ result.clinical_prob }}</div>
+          </div>
+        </div>
+        <!-- Audio CRNN -->
+        <div class="modality">
+          <div class="modality-header">
+            <div>
+              <p class="modality-name"><i class="fa-solid fa-wave-square"></i> Audio CRNN (BiLSTM)</p>
+              <p class="modality-desc">Respiratory sound sequence</p>
+              {% if result.is_audio_synthetic %}<span class="synthetic-warn"><i class="fa-solid fa-triangle-exclamation"></i> Synthetic test input.</span>{% endif %}
+            </div>
+            <div class="modality-score">{{ result.audio_prob }}</div>
+          </div>
+          
+          {% if result.audio_filename %}
+          <div id="waveform-container">
+            <button id="play-btn" type="button"><i class="fa-solid fa-play"></i></button>
+            <div id="waveform"></div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    {% else %}
+      <div style="text-align: center; padding: 60px 20px; color: var(--border);">
+        <i class="fa-solid fa-arrow-left" style="font-size: 32px; margin-bottom: 16px; display: block;"></i>
+        <p style="color: var(--text-muted); font-size: 14px;">Fill out patient data and upload files to compute risk.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  <!-- BOTTOM FULL-WIDTH: FUSION -->
+  {% if result %}
+  <section class="card fusion-container">
+    <h2><i class="fa-solid fa-microchip"></i> Final Analysis</h2>
+    <div class="fusion-verdict {% if result.fusion_prob == 'MODEL NOT LOADED' %}missing{% endif %}">
+      <div class="fusion-left">
+        <h3>Multimodal Late Fusion</h3>
+        <p>Late fusion mathematically combines independent modality-level model outputs using a logistic-regression meta-learner.</p>
+      </div>
+      <div class="fusion-right">
+        <p class="score">{{ result.fusion_prob }}</p>
+        <p class="class">Risk Classification: {{ result.classification }}</p>
+      </div>
+    </div>
+    
+    {% if result.fusion_prob != 'MODEL NOT LOADED' %}
+      <div style="margin-top: 24px;">
+        <canvas id="riskGraph" width="1000" height="100" style="width: 100%; border-radius: 8px; background: #000; border: 1px solid var(--border);"></canvas>
+      </div>
+    {% endif %}
+  </section>
+  {% endif %}
+</main>
+
+<script type="module">
+  import WaveSurfer from 'https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.esm.js'
+
+  {% if result and result.audio_filename %}
+    const wavesurfer = WaveSurfer.create({
+      container: '#waveform',
+      waveColor: '#222222',
+      progressColor: '#3b82f6',
+      cursorColor: '#3b82f6',
+      barWidth: 2,
+      barRadius: 2,
+      height: 32,
+      url: '/uploads/{{ result.audio_filename }}'
+    })
+
+    const playBtn = document.getElementById('play-btn');
+    playBtn.onclick = () => { wavesurfer.playPause(); }
+    
+    wavesurfer.on('play', () => { playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>'; })
+    wavesurfer.on('pause', () => { playBtn.innerHTML = '<i class="fa-solid fa-play"></i>'; })
+  {% endif %}
+</script>
+
+<script>
+  {% if result and result.fusion_prob != 'MODEL NOT LOADED' %}
+    const canvas = document.getElementById('riskGraph');
+    const ctx = canvas.getContext('2d');
+    const probStr = "{{ result.fusion_prob }}";
+    const prob = parseFloat(probStr) / 100.0;
+    
+    let lineColor = '#10b981'; // Low Risk = Green
+    if (prob >= 0.7) {
+      lineColor = '#f43f5e'; // High Risk = Red
+    } else if (prob >= 0.4) {
+      lineColor = '#f59e0b'; // Mod Risk = Yellow
+    }
+
+    const amplitude = 10 + (prob * 35); 
+    const frequency = 0.02 + (prob * 0.04);
+    let offset = 0;
+
+    function drawSineWave() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.beginPath();
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = 3;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = lineColor;
+
+      for (let x = 0; x < canvas.width; x++) {
+        const y = canvas.height / 2 + Math.sin(x * frequency + offset) * amplitude;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      offset -= 0.15; 
+      requestAnimationFrame(drawSineWave);
+    }
+    
+    drawSineWave();
+  {% endif %}
+</script>
+
+</body>
+</html>
