@@ -1,0 +1,6 @@
+GOLD Stage,FEV1 % Predicted,Sample Count,Percentage,Clinical Presentation
+GOLD 1 (Mild),>= 80%,23,22.77%,"Mild airflow obstruction, often asymptomatic at rest"
+GOLD 2 (Moderate),50% <= FEV1 < 80%,43,42.57%,"Shortness of breath on exertion, cough/sputum"
+GOLD 3 (Severe),30% <= FEV1 < 50%,27,26.73%,"Frequent exacerbations, severe activity restriction"
+GOLD 4 (Very Severe),< 30%,8,7.92%,"Respiratory failure, hypoxemia, cor pulmonale"
+Total Cohort,Combined,101,100.0%,Full clinical spectrum

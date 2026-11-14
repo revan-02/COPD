@@ -1,0 +1,6 @@
+Algorithm,Family,Optimization Objective,Key Hyperparameters,Primary Strengths
+Tuned XGBoost,Extreme Gradient Boosting,LogLoss / Multiclass Softmax,"n_est=50, max_depth=3, lr=0.1","Robust to multicollinearity, tree pruning"
+LightGBM,Histogram-based GBDT,Multi-logloss,"num_leaves=31, max_depth=4",Fast gradient leaf-wise growth
+CatBoost,Symmetric Tree Boosting,MultiClass,"depth=4, l2_leaf_reg=3",Native handling of categorical variables
+Support Vector Machine,Kernelized Margin Classifier,Hinge / Squared Hinge Loss,"C=1.0, kernel='rbf', gamma='scale'",Effective in high-dimensional non-linear spaces
+K-Nearest Neighbors,Instance-Based Non-Parametric,Minkowski Distance (p=2),"k=5, weights='distance'",Zero assumptions on underlying distribution

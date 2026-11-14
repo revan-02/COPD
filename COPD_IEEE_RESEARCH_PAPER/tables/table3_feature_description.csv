@@ -1,0 +1,12 @@
+Feature Name,Type,Unit,Description
+FEV1,Continuous,mL,Forced Expiratory Volume in 1 second
+FVC,Continuous,mL,Forced Vital Capacity (total volume exhaled)
+FEV1PRED,Continuous,%,FEV1 as % of NHANES III demographic predicted normal
+FVCPRED,Continuous,%,FVC as % of NHANES III demographic predicted normal
+AGE,Discrete,Years,Chronological patient age
+GENDER_ENC,Categorical,Binary,"Biological sex (1: Male, 2: Female)"
+SMOKE_former,Categorical,Binary,Former smoker status indicator
+SMOKE_never,Categorical,Binary,Never smoker status indicator
+MWT_best,Continuous,Meters,Best 6-Minute Walk Test functional distance
+CAT_score,Discrete,Points (0-40),COPD Assessment Test health impairment score
+SGRQ_score,Continuous,Points (0-100),St. George's Respiratory Questionnaire quality score

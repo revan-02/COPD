@@ -1,0 +1,8 @@
+Subsystem,Parameter,Engineering Specification
+Embedded Controller,SoC,ESP32 (Dual-core Xtensa 32-bit LX6 @ 240 MHz)
+ADC Subsystem,Resolution & Channels,"12-bit SAR ADC (GPIO 34 = ADC1_CH6, GPIO 35 = ADC1_CH7)"
+Differential Pressure,Transducer & Range,"MPX10DP (0 to 10 kPa / 0 to 1.45 psi, 3.5 mV/kPa)"
+Signal Conditioning,Instrumentation Amp,"AD620 (CMRR > 100 dB, RG = 620 Ohm, Gain G ≈ 80)"
+Acoustic Sampling,Audio Format,"16 kHz Mono, 16-bit PCM, 128-bin Mel-spectrogram"
+Environmental Sensor,Temperature & Humidity,"DHT22 (-40 to 80 °C, 0 to 100% RH, single-bus digital)"
+Flow Sampling Rate,Timer Interrupt Frequency,"200 Hz (5 ms period, exceeding human respiratory bandwidth)"

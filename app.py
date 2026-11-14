@@ -174,4 +174,6 @@ def run_live_inference(audio_array):
 
 if __name__ == '__main__':
     # Use socketio.run instead of app.run to support WebSocket upgrades
-    socketio.run(app, host='127.0.0.1', port=5001, debug=True, use_reloader=False, allow_unsafe_werkzeug=True)
+    port = int(os.environ.get('PORT', 5001))
+    print(f'Starting PulmoAI on http://localhost:{port} (0.0.0.0)...')
+    socketio.run(app, host='0.0.0.0', port=port, debug=False, use_reloader=False, allow_unsafe_werkzeug=True)

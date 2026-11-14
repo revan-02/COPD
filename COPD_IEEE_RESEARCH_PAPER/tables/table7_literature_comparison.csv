@@ -1,0 +1,6 @@
+Author & Year,Research Method,Dataset,Performance,Limitations
+Amaral et al. (2018),Forced Oscillation Technique + SVM,Local clinical cohort (N=86),Accuracy: 88.4%,"Expensive oscillometry hardware, no IoT integration"
+Badr et al. (2020),Mobile Spirometry + Random Forest,University hospital (N=120),Sensitivity: 86.2%,"Manual calibration, no acoustic adventitious sound tracking"
+Rocha et al. (2019),ICBHI Respiratory Sound Challenge,ICBHI Database (N=126),Score: 64.5%,Audio only; lacked spirometric volume integration
+Tang et al. (2021),XGBoost for COPD Readmission,MIMIC-III clinical records,AUC: 0.831,Retrospective EHR data only; no point-of-care embedded sensor
+This Work (2026),Dual-Modality (XGBoost + CRNN + ESP32),COPD Clinical (N=101) + ICBHI (N=126),Accuracy: 97.39% / 84.15%,"Small clinical sample, cross-modal datasets evaluated in parallel"

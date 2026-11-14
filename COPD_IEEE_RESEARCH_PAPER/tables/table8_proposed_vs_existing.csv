@@ -1,0 +1,6 @@
+System Feature,Clinical Desktop Spirometer,Commercial Portable Spirometer,Proposed ESP32 System
+System Unit Cost,"$2,000 - $8,000 USD",$300 - $800 USD,< $50 USD
+Acoustic Breath Auscultation,No (Requires separate stethoscope),No,Yes (Simultaneous 16 kHz audio)
+Environmental BTPS Correction,Manual or internal barometer,Rarely available,Real-time via DHT22
+Machine Learning Integration,Rule-based cutoff only,Basic linear thresholding,XGBoost + CRNN + Late Fusion
+Telemedicine & WebSockets,Proprietary software / USB cable,Proprietary Bluetooth app,Open-standards WebSocket / WebAudio

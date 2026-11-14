@@ -59,6 +59,12 @@ def predict_clinical(form_data):
     race = form_data.get('race', 'caucasian')
     smoking_status = form_data.get('smoking_status', 'never')
 
+    # Fail-safe auto-detection: if user entered in Liters (e.g. 1.0 - 10.0), convert to mL
+    if 0 < fev1 <= 15.0:
+        fev1 = fev1 * 1000.0
+    if 0 < fvc <= 15.0:
+        fvc = fvc * 1000.0
+
     fev1_ref, fvc_ref = calculate_predicted_spirometry(age, height, gender, race)
     fev1pred_pct = (fev1 / fev1_ref) * 100.0
     fvcpred_pct = (fvc / fvc_ref) * 100.0

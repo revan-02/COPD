@@ -1,0 +1,7 @@
+Model Name,Accuracy (%),Precision (%),Recall (%),F1-Score (%),ROC-AUC,Evaluation Context
+Tuned XGBoost (with spirometry features),97.39%,88.72%,94.40%,91.47%,0.997,Includes spirometric ratio features (Target Leakage Audit)
+Tuned XGBoost (Leakage-Free Clinical),84.15%,82.50%,83.20%,82.80%,0.892,Spirometric ratios withheld; symptoms & demographics only
+CatBoost Classifier,95.05%,86.80%,92.50%,89.56%,0.985,Standard spirometry input set
+LightGBM Classifier,94.12%,85.40%,91.20%,88.20%,0.981,Standard spirometry input set
+Support Vector Machine (RBF),87.12%,79.50%,82.10%,80.78%,0.912,Standard spirometry input set
+K-Nearest Neighbors (k=5),82.18%,74.20%,77.80%,75.96%,0.854,Standard spirometry input set

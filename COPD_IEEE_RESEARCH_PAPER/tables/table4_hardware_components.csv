@@ -1,0 +1,8 @@
+Component,Category,Function,Interface,Operating Voltage
+ESP32 DevBoard,Processing Unit,Master acquisition & telemetry,Core SoC,3.3V logic / 5V USB
+MPX10DP,Pressure Transducer,Differential pressure sensing,Through AD620,5.0V DC excitation
+AD620,Analog Front-End,Bridge voltage amplification,GPIO 34 (ADC1_CH6),5.0V single supply
+Acoustic Microphone,Acoustic Sensor,Tracheal breath sound capture,Audio preamplifier,3.3V DC
+Audio Preamp,Signal Conditioning,Audio amplification & envelope,"GPIO 35 (AO), GPIO 27 (DO)",3.3V DC
+DHT22 (AM2302),Environmental Sensor,Ambient temperature & humidity,GPIO 4 (Single-bus),3.3V DC
+Spirometer Mouthpiece,Mechanical Interface,Aerodynamic airflow constriction,Pneumatic silicone tube,Passive

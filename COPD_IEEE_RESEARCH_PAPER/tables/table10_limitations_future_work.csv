@@ -1,0 +1,6 @@
+Research Aspect,Current Implementation Limitation,Proposed Enhancement / Roadmap
+Clinical Sample Size,N=101 patient cohort from single geographic location,Multi-center clinical trial across diverse patient demographics
+Multimodal Pairing,Parallel training on disjoint clinical and acoustic datasets,Prospectively collect paired flow and acoustic recordings per patient
+Edge ML Execution,Inference executed on Flask Python backend,Quantize models to TensorFlow Lite for Microcontrollers (ESP32 Edge)
+Mouthpiece Aerodynamics,Requires benchtop 3.0 L syringe empirical calibration,Computational Fluid Dynamics (CFD) optimized 3D printed Venturi tube
+Imaging Integration,Chest X-ray CNN currently conceptual,Incorporate DICOM thoracic imaging into centralized hospital EHR
