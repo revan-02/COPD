@@ -1,6 +1,11 @@
 import os
 import numpy as np
-import librosa
+try:
+    import librosa
+    LIBROSA_AVAILABLE = True
+except ImportError:
+    librosa = None
+    LIBROSA_AVAILABLE = False
 from flask import Flask, render_template, request, send_from_directory
 from flask_socketio import SocketIO, emit
 
@@ -145,7 +150,7 @@ def handle_audio(chunk):
         })
 
 def run_live_inference(audio_array):
-    if not AUDIO_LOADED or audio_model is None:
+    if not AUDIO_LOADED or audio_model is None or not LIBROSA_AVAILABLE or librosa is None:
         return "MODEL NOT LOADED", 0.0, 0.0
     try:
         mel_spec = librosa.feature.melspectrogram(y=audio_array, sr=TARGET_SR, n_mels=128)
